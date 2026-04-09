@@ -58,14 +58,14 @@ By the final review, this README should clearly show:
 
 | Name | Primary Role | Secondary Role | Strengths Brought to the Project |
 |---|---|---|---|
-| `[Student 1]` | `[Electronics / Coding / App / Fabrication / Mechanics]` | `[Role]` | `[Write here]` |
-| `[Student 2]` | `[Electronics / Coding / App / Fabrication / Mechanics]` | `[Role]` | `[Write here]` |
+| `[Gargi Waghmare]` | `[Electronics / Coding ]` | `[App]` | `[technical proficiency and problem solving]` |
+| `[Nishtha Vats]` | `[Fabrication / Mechanics]` | `[App]` | `[strategic thinking and creativity]` |
 
 ## 1.3 Project Title
-`[Enter the title of your project]`
+`[Project Phantasm]`
 
 ## 1.4 One-Line Pitch
-`[Describe your project in one sentence]`
+`[A Bluetooth-controlled ghost slides down an inclined rope to jumpscare unsuspecting passersby, triggered in secret by an operator using a custom phone app.]`
 
 ## 1.5 Expanded Project Idea
 In 1–2 paragraphs, explain:
@@ -75,7 +75,8 @@ In 1–2 paragraphs, explain:
 - what technologies are involved.
 
 **Response:**  
-`[Write here]`
+`[Project Phantasm is a kinetic jumpscare installation where a ghost prop — glowing red eyes, eerie sound effect — is launched down an inclined zip-line rope at the press of a button on a phone app. The ghost hangs from a pulley-and-string system driven by a DC gearbox motor, which is controlled wirelessly via Bluetooth through a custom MIT App Inventor interface. An operator hidden from view waits for the perfect moment — when someone walks into range — and taps "Launch" to send the ghost flying silently down the rope toward them.
+The experience is pure theatrical chaos. The ghost moves fast, appears out of nowhere, and is gone before the victim fully processes what happened. What makes it especially fun is the asymmetry — one person has complete control and can see everything, while the target has no idea. The operator becomes a puppeteer of fear. Technologies involved include an ESP32 microcontroller, a DC gearbox motor, an L298N motor driver, a hook pulley for rope redirection, NeoPixel LEDs for glowing eyes, a buzzer for sound, and a custom Bluetooth LE Android app built in MIT App Inventor.]`
 
 ---
 
@@ -101,7 +102,7 @@ Answer the following:
 - Why would someone want to try it again?
 
 **Response:**  
-`[Write here]`
+`[The experience is a sudden, unexpected jumpscare delivered by a physical object moving through real space — not a screen, not a speaker, but something actually flying at you. The participant feels a sharp spike of shock and fear, immediately followed by laughter and disbelief once they realize what happened. The combination of surprise, relief, and the absurdity of being scared by a fabric ghost on a rope makes it deeply shareable — people immediately want to watch it happen to someone else, or try operating it themselves. The replay loop is driven by the operator's desire to find the perfect victim and the victim's desire for revenge by becoming the operator.]`
 
 ## 2.3 Design Persona
 Complete the sentence below:
@@ -109,7 +110,7 @@ Complete the sentence below:
 > We are designing this project as if we are a small creative studio making a **[toy / game / playable object / interactive experience]** for **[children / teens / adults / classmates / exhibition visitors / mixed audience]**.
 
 **Response:**  
-`[Write here]`
+`[We are designing this project as if we are a small creative studio making a interactive experience for a mixed audience of teens, adults, and exhibition visitors.]`
 
 ---
 
@@ -120,15 +121,15 @@ List what inspired the project.
 
 | Source Type | Title / Link | What Inspired You |
 |---|---|---|
-| `[Toy / Board game / App / Video / Website / Object]` | `[Link or title]` | `[What did you learn or borrow?]` |
-| `[Toy / Board game / App / Video / Website / Object]` | `[Link or title]` | `[What did you learn or borrow?]` |
-| `[Toy / Board game / App / Video / Website / Object]` | `[Link or title]` | `[What did you learn or borrow?]` |
+| `[Video]` | `[https://youtu.be/tB8D2QZ9lA4?si=OahrS8xceYasXdbh]` | `[The core mechanic — a ghost on an inclined rope — came directly from DIY Halloween yard decoration videos. We borrowed the zip-line concept and made it electronically controlled.]` |
+| `[App / Object]` | `[Bluetooth RC car controller apps]` | `[The idea of controlling a physical moving object from a phone joystick/button interface — simple, low-latency, satisfying to use.]` |
+| `[Interactive Experience]` | `[Haunted house walk-through attractions]` | `[The operator-victim dynamic, the element of hidden control, and the idea that fear is most effective when it comes from an unexpected physical object in real space.]` |
 
 ## 3.2 Original Twist
 What makes your project original?
 
 **Response:**  
-`[Write here]`
+`[Most zip-line ghost decorations are passive — they rely on wind or a manual push and have no control. What makes Project Wraith original is the hidden human operator with full wireless control over exactly when the ghost launches. This turns a decoration into a game with two players — the operator who chooses the moment, and the unsuspecting target who has no idea. Adding glowing NeoPixel eyes and a scream sound effect triggered at the moment of launch makes the ghost feel alive rather than just mechanical. The phone app interface also means the operator can be completely out of sight, which dramatically increases the believability and shock factor.]`
 
 ---
 
@@ -144,37 +145,37 @@ Examples:
 - move object → sensor detects → sound/light response → player reacts
 
 **Response:**  
-`[Write here]`
+`[wait → spot target → tap launch → ghost descends → target reacts → ghost resets → repeat]`
 
 ## 4.2 Intended Player / Audience
 
 | Question | Response |
 |---|---|
-| Who is this for? | `[Write here]` |
-| Age range | `[Write here]` |
-| Solo or multiplayer | `[Write here]` |
-| Expected duration of one round | `[Write here]` |
-| What should the player feel? | `[Write here]` |
-| Is explanation required before use? | `[Write here]` |
+| Who is this for? | `[Two roles : one operator (the person with the phone) and unlimited unsuspecting targets (passersby or participants)]` |
+| Age range | `[8 and above — anyone who can handle a mild jumpscare]` |
+| Solo or multiplayer | `[Two-player asymmetric : one operator, one or more targets]` |
+| Expected duration of one round | `[5–15 seconds from launch to reset]` |
+| What should the player feel? | `[Operator feels power, anticipation, and delight. Target feels shock, fear, then laughter.]` |
+| Is explanation required before use? | `[No : targets don't know anything (that's the point). Operator needs a 30-second briefing on the app.]` |
 
 ## 4.3 Player Journey
 Describe exactly how a player will use the project.
 
-1. **Approach:** `[How does the player first encounter it?]`
-2. **Start:** `[How do they begin?]`
-3. **First Action:** `[What do they do first?]`
-4. **Main Interaction:** `[What keeps happening during use?]`
-5. **System Response:** `[How does the project respond?]`
-6. **Win / Lose / End Condition:** `[How does one round end?]`
-7. **Reset:** `[How does the next round begin?]`
+1. **Approach:** `[A person walks down a street, corridor, or open space, completely unaware of the installation. The ghost is parked silently at the top of the rope, invisible or camouflaged in the dark/background.]`
+2. **Start:** `[The operator, hidden nearby with their phone opens the MIT App Inventor app and connects to the ESP32 via Bluetooth.]`
+3. **First Action:** `[The operator watches the target approach and waits for the ideal moment, close enough for maximum impact.]`
+4. **Main Interaction:** `[The operator taps the "Launch" button on the app. The motor fires, winding the pull-string through the pulley and dragging the ghost up momentarily before releasing it to fly down the inclined rope toward the target.]`
+5. **System Response:** `[The ghost's NeoPixel eyes flash red, the buzzer emits a scream sound, and the ghost physically moves through real space at speed directly toward the target.]`
+6. **Win / Lose / End Condition:** `[The round ends when the ghost reaches the bottom limit switch and the motor auto-stops. Success is measured purely by the quality of the target's reaction.]`
+7. **Reset:** `[The operator taps "Reset" on the app. The motor reels the ghost back up to the top position, limit switch stops it, and the system is ready for the next target.]`
 
 ## 4.4 Rules of Play
 If your project is a game, list the rules clearly.
 
-- `[Rule 1]`
-- `[Rule 2]`
-- `[Rule 3]`
-- `[Rule 4]`
+- `[The operator must stay hidden and out of sight of the target at all times.]`
+- `[The ghost must only be launched when a target is within the scare zone (roughly 1–2 metres from the rope's path).]`
+- `[The operator cannot launch twice in a row at the same person — new target each round.]`
+- `[Targets who become operators must find and scare someone who hasn't been hit yet.]`
 
 ---
 
@@ -183,24 +184,24 @@ If your project is a game, list the rules clearly.
 ## 5.1 Definition of “Playable”
 Your project will be considered complete only if these conditions are met.
 
-- [ ] `[Condition 1]`
-- [ ] `[Condition 2]`
-- [ ] `[Condition 3]`
-- [ ] `[Condition 4]`
-- [ ] `[Condition 5]`
+- [ ] `[The ghost slides down the inclined rope reliably and reaches the bottom every single time without getting stuck.]`
+- [ ] `[The MIT App Inventor app connects to the ESP32 via Bluetooth and the Launch button triggers the motor with no noticeable delay.]`
+- [ ] `[The motor auto-stops at both the top and bottom positions using limit switches — no manual stopping needed.]`
+- [ ] `[NeoPixel eyes glow red and the buzzer fires at the moment of launch, every time.]`
+- [ ] `[The ghost resets to the top position with a single tap on the app and is ready for the next round within 15 seconds.]`
 
 ## 5.2 Minimum Viable Version
 What is the smallest version of this project that still delivers the core experience?
 
 **Response:**  
-`[Write here]`
+`[A ghost prop on an inclined rope that can be launched and stopped via a single button on a phone app over Bluetooth, with the motor auto-stopping at the bottom via a limit switch. No LEDs, no sound, no reset automation — just the ghost flying down on command. If that one interaction works reliably and produces a genuine reaction, the core experience is delivered.]`
 
 ## 5.3 Stretch Features
 What features are nice to have but not essential?
 
-- `[Stretch feature 1]`
-- `[Stretch feature 2]`
-- `[Stretch feature 3]`
+- `[A "scream mode" where the speaker plays an actual recorded scream audio clip instead of a buzzer tone.]`
+- `[A PIR motion sensor that automatically alerts the operator (phone vibration) when someone enters the scare zone.]`
+- `[A reaction-rating button on the app (1–5 stars) that logs the best scare of the session on a leaderboard displayed on a small OLED screen next to the installation.]`
 
 ---
 
