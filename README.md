@@ -685,7 +685,7 @@ Include:
 - how documentation will be maintained.
 
 **Response:**  
-`Tasks were divided based on skill sets: Gargi handled the entire electrical system, including wiring, coding, and integration of all electronic components, while Nishtha focused on designing and fabricating the ghost prop, particularly the face and its visual detailing. Key decisions were made collaboratively during each class session through quick verbal check-ins; in cases of disagreement, both approaches were prototyped and the more effective solution was selected. Progress was reviewed at the start of every session against weekly milestones, and if any task was delayed, the other member shifted to supporting work such as documentation or preparation. The README was consistently updated after each class session rather than being deferred to the end.
+`Tasks were divided based on skill sets: Gargi handled the electrical system, including wiring, coding, and integration of all electronic components, while Nishtha focused on designing and fabricating the ghost prop, particularly the face and its visual detailing. Key decisions were made collaboratively during each class session through quick verbal check-ins; in cases of disagreement, both approaches were prototyped and the more effective solution was selected. Progress was reviewed at the start of every session against weekly milestones, and if any task was delayed, the other member shifted to supporting work such as documentation or preparation. The README was consistently updated after each class session rather than being deferred to the end.
 `
 
 ## 13.2 Task Breakdown
@@ -696,25 +696,25 @@ Include:
 | T2 | Complete BOM and identify purchases | Both | 1 | Week 1 | T1 | Done |
 | T3 | Procure all materials | Gargi | 3 | Week 1 | T2 | Done |
 | T4 | Test ESP32, motor, L298N, servo, sensor individually | Gargi | 3 | Week 2 | T3 | Done |
-| T5 | Build mechanical rope and pulley system | Gargi | 4 | Week 2 | T3 | Done |
+| T5 | Build mechanical rope and pulley system | Both | 4 | Week 2 | T3 | Done |
 | T6 | Write and test MicroPython code (motor + sensor + servo) | Gargi | 4 | Week 2 | T4 | Done |
 | T7 | Build ghost prop and mount on platform | Nishtha | 2 | Week 2 | T3 | Done |
 | T8 | Implement WiFi AP mode and web server in code | Gargi | 3 | Week 3 | T6 | Done |
 | T9 | Build and style HTML control interface | Gargi | 2 | Week 3 | T8 | Done |
 | T10 | Integrate full system — electronics on platform | Gargi | 4 | Week 3 | T5, T6, T7 | Done |
 | T11 | End-to-end test and calibrate FORWARD_MS / REVERSE_MS | Both | 2 | Week 3 | T10 | Done |
-| T12 | Playtest with unsuspecting participants | Both | 2 | Week 4 | T11 | Done |
-| T13 | Debug and refine based on playtest findings | Gargi | 3 | Week 4 | T12 | Done |
-| T14 | Complete README documentation | Gargi | 3 | Week 4 | T13 | Done |
+| T12 | Playtest with unsuspecting participants | Nishtha | 2 | Week 4 | T11 | Done |
+| T13 | Debug and refine based on playtest findings | Both | 3 | Week 4 | T12 | Done |
+| T14 | Complete README documentation | Both | 3 | Week 4 | T13 | Done |
 
 ## 13.3 Responsibility Split
 
 | Area | Main Owner | Support Owner |
 |---|---|---|
 | Concept and gameplay | `Nishtha` | `Gargi` |
-| Electronics | `Gargi` | `[Name]` |
-| Coding | `Gargi` | `[Name]` |
-| App | `Gargi` | `Nishtha` |
+| Electronics | `Gargi` | `Nishtha` |
+| Coding | `Gargi` | `[` |
+| App | `Both` | `` |
 | Mechanical build | `Gargi` | `Nishtha` |
 | Testing | `Nishtha` | `Gargi` |
 | Documentation | `Nishtha` | `Gargi` |
@@ -775,7 +775,7 @@ Expected outcomes:
 
 | Risk | Type | Likelihood | Impact | Mitigation Plan | Owner |
 |---|---|---|---|---|---|
-| Pull-string snaps under tension | Mechanical | Medium | High | Use 2mm braided nylon string rated well above platform weight; inspect before each demo; carry spare string | Gargi |
+| Pull-string snaps under tension | Mechanical | Medium | High | Use 2mm braided nylon string rated well above platform weight; inspect before each demo; carry spare string | Nishtha |
 | Platform jams mid-rope on a knot or kink | Mechanical | Medium | High | Keep rope as taut as possible; inspect full rope length before demo; test 5 full runs before public demo | Both |
 | ESP32 brownouts when motor draws heavy current | Technical | Medium | Medium | Buck converter provides stable 5V independently of L298N; L298N onboard regulator not used for logic | Gargi |
 | Phone shows "No Internet" warning and student cancels | Technical | Medium | Medium | Brief operator on iPhone workaround: tap "Use Without Internet" — takes 2 seconds | Nishtha |
