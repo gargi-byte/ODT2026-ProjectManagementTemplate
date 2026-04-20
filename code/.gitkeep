@@ -1,1 +1,568 @@
+import network
+import socket
+import time
+from machine import Pin, PWM, time_pulse_us
+
+# ════════════════════════════════════════════════════
+#  PIN DEFINITIONS
+# ════════════════════════════════════════════════════
+IN1   = Pin(26, Pin.OUT)   # Motor driver IN1
+IN2   = Pin(27, Pin.OUT)   # Motor driver IN2
+TRIG  = Pin(5,  Pin.OUT)   # Ultrasonic TRIG
+ECHO  = Pin(18, Pin.IN)    # Ultrasonic ECHO
+                               # Servo on Pin 19 — initialised on demand
+
+# ════════════════════════════════════════════════════
+#  CONSTANTS  — tune these to your setup
+# ════════════════════════════════════════════════════
+FORWARD_MS     = 8000   # ms for ghost to travel 9m forward  ← TUNE THIS
+REVERSE_MS     = 8500   # ms to return (slightly longer)      ← TUNE THIS
+PAUSE_MS       = 15000  # pause at far end (15 seconds)
+DETECT_CM      = 100    # ultrasonic trigger distance (100cm)
+POLL_MS        = 80     # sensor poll interval during pause
+
+# WiFi AP credentials
+SSID     = "GhostESP"
+PASSWORD = "12345678"
+IP       = "192.168.4.1"
+
+# ════════════════════════════════════════════════════
+#  STATE
+# ════════════════════════════════════════════════════
+ghost_running = False
+
+# ════════════════════════════════════════════════════
+#  SERVO HELPERS
+# ════════════════════════════════════════════════════
+servo = None  # initialised on demand only
+
+def servo_init():
+    global servo
+    servo = PWM(Pin(19), freq=50)
+
+def servo_angle(deg):
+    servo_init()          # always reinitialise before commanding
+    min_duty = 25         # ~0.5ms pulse = 0 degrees
+    max_duty = 125        # ~2.5ms pulse = 180 degrees
+    duty = int(min_duty + (max_duty - min_duty) * deg / 180)
+    servo.duty(duty)
+    time.sleep_ms(400)    # give servo time to physically reach angle
+
+def servo_off():
+    global servo
+    if servo:
+        servo.deinit()    # cut PWM completely — stops buzzing/jitter
+        servo = None
+
+def servo_neutral():
+    servo_angle(90)
+    servo_off()           # hold position then cut power
+
+def servo_sweep():
+    """Sweep 90 degrees anticlockwise then return to neutral"""
+    print("[SERVO] Moving anticlockwise to 0 degrees")
+    servo_angle(0)        # 90 degrees anticlockwise from centre
+    time.sleep_ms(800)    # hold at 0 for a beat
+    print("[SERVO] Returning to neutral (90 degrees)")
+    servo_angle(90)
+    time.sleep_ms(600)    # settle at neutral
+    servo_off()           # cut PWM — no more buzz
+    print("[SERVO] Done and powered off")
+
+# ════════════════════════════════════════════════════
+#  MOTOR HELPERS
+# ════════════════════════════════════════════════════
+def motor_forward():
+    print("[MOTOR] Spinning FORWARD")
+    IN1.value(1)
+    IN2.value(0)
+
+def motor_reverse():
+    print("[MOTOR] Spinning REVERSE")
+    IN1.value(0)
+    IN2.value(1)
+
+def motor_stop():
+    print("[MOTOR] Stopped")
+    IN1.value(0)
+    IN2.value(0)
+
+# ════════════════════════════════════════════════════
+#  ULTRASONIC SENSOR
+# ════════════════════════════════════════════════════
+def get_distance_cm():
+    TRIG.value(0)
+    time.sleep_us(2)
+    TRIG.value(1)
+    time.sleep_us(10)
+    TRIG.value(0)
+    try:
+        duration = time_pulse_us(ECHO, 1, 25000)
+        if duration < 0:
+            return 999
+        return (duration / 2) / 29.1
+    except:
+        return 999
+
+# ════════════════════════════════════════════════════
+#  GHOST SEQUENCE
+# ════════════════════════════════════════════════════
+def run_ghost_sequence():
+    global ghost_running
+    ghost_running = True
+    print("\n" + "="*40)
+    print("GHOST SEQUENCE STARTED")
+    print("="*40)
+
+    # STEP 1 — Move forward
+    print("\n[STEP 1] Moving FORWARD for", FORWARD_MS, "ms")
+    motor_forward()
+    time.sleep_ms(FORWARD_MS)
+    motor_stop()
+    print("[STEP 1] Forward travel complete")
+
+    # STEP 2 — Pause at far end, sensor active
+    print("\n[STEP 2] Pausing for", PAUSE_MS, "ms — sensor scanning...")
+    servo_neutral()
+    start = time.ticks_ms()
+    sensor_triggered = False
+
+    while time.ticks_diff(time.ticks_ms(), start) < PAUSE_MS:
+        dist = get_distance_cm()
+        print("[SENSOR] Distance:", round(dist), "cm", end="")
+
+        if dist < DETECT_CM and not sensor_triggered:
+            print("  ← DETECTED! Triggering servo")
+            sensor_triggered = True
+            servo_sweep()
+        else:
+            print()  # newline
+
+        time.sleep_ms(POLL_MS)
+
+    print("[STEP 2] Pause complete. Sensor triggered:", sensor_triggered)
+
+    # STEP 3 — Return reverse
+    print("\n[STEP 3] Moving REVERSE for", REVERSE_MS, "ms")
+    motor_reverse()
+    time.sleep_ms(REVERSE_MS)
+    motor_stop()
+    print("[STEP 3] Ghost returned to start")
+
+    print("\n" + "="*40)
+    print("SEQUENCE COMPLETE — Ready for next launch")
+    print("="*40 + "\n")
+    ghost_running = False
+
+# ════════════════════════════════════════════════════
+#  HTML PAGE (served to phone browser)
+# ════════════════════════════════════════════════════
+HTML = """\
+HTTP/1.1 200 OK\r
+Content-Type: text/html\r
+Connection: close\r
+\r
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Wraith</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #080a0c;
+    --surface: #0e1215;
+    --border:  #1a2a1a;
+    --green:   #00ff41;
+    --dimgreen:#005c17;
+    --red:     #ff3131;
+    --text:    #c8d8c8;
+    --muted:   #4a5a4a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    overflow: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .skull {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(0,255,65,0.4));
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+  }
+
+  h1 {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    color: var(--green);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 20px rgba(0,255,65,0.5);
+    margin-bottom: 0.3rem;
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2rem 2.5rem;
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    position: relative;
+  }
+
+  /* Corner accents */
+  .card::before, .card::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: var(--green);
+    border-style: solid;
+  }
+  .card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+  /* Status indicator */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    width: 100%;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  .status-text { flex: 1; }
+
+  /* Terminal log */
+  .log {
+    width: 100%;
+    background: #050707;
+    border: 1px solid #0f1f0f;
+    border-radius: 2px;
+    padding: 0.75rem;
+    font-size: 0.65rem;
+    color: var(--dimgreen);
+    height: 80px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+
+  .log span { display: block; }
+  .log .new { color: var(--green); }
+
+  /* Launch button */
+  #launchBtn {
+    width: 100%;
+    padding: 1.1rem;
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-family: 'Creepster', cursive;
+    font-size: 1.6rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: color 0.2s;
+    text-shadow: 0 0 8px rgba(0,255,65,0.4);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #launchBtn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--green);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+    z-index: -1;
+  }
+
+  #launchBtn:hover::before,
+  #launchBtn:active::before { transform: scaleX(1); }
+  #launchBtn:hover, #launchBtn:active { color: #080a0c; }
+
+  #launchBtn:disabled {
+    border-color: var(--muted);
+    color: var(--muted);
+    cursor: not-allowed;
+    text-shadow: none;
+  }
+  #launchBtn:disabled::before { display: none; }
+
+  .countdown {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    min-height: 1rem;
+  }
+
+  .countdown.active { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="skull">&#x1F480;</div>
+<h1>PROJECT WRAITH</h1>
+<p class="subtitle">ghost control terminal</p>
+
+<div class="card">
+  <div class="status-row">
+    <span class="dot"></span>
+    <span class="status-text" id="statusTxt">SYSTEM ONLINE — READY</span>
+  </div>
+
+  <div class="log" id="log">
+    <span>> system boot complete</span>
+    <span>> ESP32 AP active</span>
+    <span>> awaiting launch command...</span>
+  </div>
+
+  <button id="launchBtn" onclick="launch()">&#x1F47B; LAUNCH</button>
+
+  <div class="countdown" id="countdown"></div>
+</div>
+
+<script>
+  var busy = false;
+  var logEl = document.getElementById('log');
+  var btn   = document.getElementById('launchBtn');
+  var cd    = document.getElementById('countdown');
+  var st    = document.getElementById('statusTxt');
+
+  function addLog(msg, highlight) {
+    var s = document.createElement('span');
+    s.textContent = '> ' + msg;
+    if (highlight) s.className = 'new';
+    logEl.appendChild(s);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function launch() {
+    if (busy) return;
+    busy = true;
+    btn.disabled = true;
+    st.textContent = 'LAUNCHING...';
+    addLog('launch command sent', true);
+
+    fetch('/launch')
+      .then(function(r) { return r.text(); })
+      .then(function(t) {
+        addLog('ghost in motion...');
+        st.textContent = 'GHOST RUNNING';
+        // Show a countdown timer (rough estimate)
+        var total = 34; // seconds — forward(8) + pause(15) + reverse(8.5) + buffer
+        var remaining = total;
+        cd.className = 'countdown active';
+        var timer = setInterval(function() {
+          remaining--;
+          cd.textContent = 'resetting in ' + remaining + 's';
+          if (remaining <= 0) {
+            clearInterval(timer);
+            cd.textContent = '';
+            cd.className = 'countdown';
+            btn.disabled = false;
+            busy = false;
+            st.textContent = 'SYSTEM ONLINE — READY';
+            addLog('sequence complete. ready.', true);
+          }
+        }, 1000);
+      })
+      .catch(function(e) {
+        addLog('error: ' + e);
+        btn.disabled = false;
+        busy = false;
+        st.textContent = 'ERROR — TRY AGAIN';
+      });
+  }
+</script>
+</body>
+</html>
+"""
+
+RESPONSE_BUSY = """\
+HTTP/1.1 200 OK\r
+Content-Type: text/plain\r
+Connection: close\r
+\r
+BUSY
+"""
+
+RESPONSE_LAUNCH = """\
+HTTP/1.1 200 OK\r
+Content-Type: text/plain\r
+Connection: close\r
+\r
+OK
+"""
+
+RESPONSE_404 = """\
+HTTP/1.1 404 Not Found\r
+Content-Type: text/plain\r
+Connection: close\r
+\r
+Not found
+"""
+
+# ════════════════════════════════════════════════════
+#  WIFI ACCESS POINT SETUP
+# ════════════════════════════════════════════════════
+def start_ap():
+    ap = network.WLAN(network.AP_IF)
+    ap.active(True)
+    ap.config(essid=SSID, password=PASSWORD, authmode=3)  # WPA2
+    while not ap.active():
+        time.sleep_ms(100)
+    print("\n[WIFI] Access Point started!")
+    print("[WIFI] SSID    :", SSID)
+    print("[WIFI] Password:", PASSWORD)
+    print("[WIFI] URL     : http://", IP)
+    print("[WIFI] Connect your phone to '", SSID, "' then open browser\n")
+    return ap
+
+# ════════════════════════════════════════════════════
+#  WEB SERVER
+# ════════════════════════════════════════════════════
+def start_server():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(('', 80))
+    s.listen(3)
+    s.setblocking(False)
+    print("[SERVER] Web server listening on port 80")
+    return s
+
+def handle_request(conn):
+    global ghost_running
+    try:
+        conn.settimeout(2.0)
+        raw = conn.recv(512).decode('utf-8', 'ignore')
+        if not raw:
+            return
+
+        # Parse first line of HTTP request
+        first_line = raw.split('\r\n')[0]
+        print("[HTTP] Request:", first_line)
+
+        if 'GET / ' in first_line or 'GET /index' in first_line:
+            conn.sendall(HTML.encode())
+            print("[HTTP] Served main page")
+
+        elif 'GET /launch' in first_line:
+            if ghost_running:
+                conn.sendall(RESPONSE_BUSY.encode())
+                print("[HTTP] Launch request denied — already running")
+            else:
+                conn.sendall(RESPONSE_LAUNCH.encode())
+                print("[HTTP] Launch command accepted")
+                # Run sequence (blocking — server pauses during this)
+                run_ghost_sequence()
+
+        else:
+            conn.sendall(RESPONSE_404.encode())
+
+    except Exception as e:
+        print("[HTTP] Error handling request:", e)
+    finally:
+        conn.close()
+
+# ════════════════════════════════════════════════════
+#  BOOT
+# ════════════════════════════════════════════════════
+print("\n" + "="*40)
+print("  PROJECT WRAITH — BOOTING")
+print("="*40)
+
+# Init servo to neutral
+print("[BOOT] Setting servo to neutral then powering off")
+servo_neutral()   # moves to 90 degrees then cuts PWM
+
+motor_stop()
+print("[BOOT] Motor stopped")
+
+# Start AP
+ap = start_ap()
+
+# Start server
+server = start_server()
+
+print("\n[BOOT] All systems ready.")
+print("[BOOT] Waiting for phone connection and launch command...\n")
+
+# ════════════════════════════════════════════════════
+#  MAIN LOOP
+# ════════════════════════════════════════════════════
+while True:
+    try:
+        conn, addr = server.accept()
+        print("[SERVER] Connection from:", addr)
+        handle_request(conn)
+    except OSError:
+        # No connection waiting — that's normal in non-blocking mode
+        pass
+    time.sleep_ms(20)
+
 
